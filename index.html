@@ -1,0 +1,1260 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Operation: Save Our Wrists</title>
+<style>
+/* ============================================================
+   OPERATION: SAVE OUR WRISTS — single-file interactive keynote
+   Pure HTML / CSS / JS. No frameworks, no libraries, no CDN.
+   ============================================================ */
+
+/* ---------- Design tokens ---------- */
+:root{
+  --bg:#05060d;
+  --bg-2:#0a0c18;
+  --ink:#eef2ff;
+  --ink-dim:#a9b1c9;
+  --ink-faint:#6b7396;
+  --glass:rgba(255,255,255,0.06);
+  --glass-brd:rgba(255,255,255,0.12);
+  --primary:#5eead4;     /* teal */
+  --primary-2:#22d3ee;   /* cyan */
+  --accent:#f59e0b;      /* amber */
+  --accent-2:#fb7185;    /* rose */
+  --good:#34d399;
+  --bad:#fb7185;
+  --warn:#fbbf24;
+  --radius:22px;
+  --shadow:0 30px 80px -20px rgba(0,0,0,0.7);
+  --ease:cubic-bezier(.22,1,.36,1);
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:"SFMono-Regular",ui-monospace,Menlo,Consolas,monospace;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:var(--font);
+  background:var(--bg);
+  color:var(--ink);
+  overflow-x:hidden;
+  line-height:1.6;
+  cursor:none;
+}
+@media (pointer:coarse){ body{cursor:auto} }
+
+/* Animated aurora background */
+body::before{
+  content:"";
+  position:fixed;inset:-20%;
+  z-index:-3;
+  background:
+    radial-gradient(40% 50% at 20% 20%, rgba(34,211,238,0.18), transparent 60%),
+    radial-gradient(45% 55% at 80% 30%, rgba(94,234,212,0.16), transparent 60%),
+    radial-gradient(50% 50% at 50% 85%, rgba(245,158,11,0.12), transparent 60%);
+  filter:blur(40px);
+  animation:aurora 18s var(--ease) infinite alternate;
+}
+@keyframes aurora{
+  0%{transform:translate3d(0,0,0) scale(1)}
+  100%{transform:translate3d(0,-4%,0) scale(1.08)}
+}
+
+/* Subtle grid */
+body::after{
+  content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;
+  background-image:linear-gradient(rgba(255,255,255,0.025) 1px,transparent 1px),
+                   linear-gradient(90deg,rgba(255,255,255,0.025) 1px,transparent 1px);
+  background-size:60px 60px;
+  mask-image:radial-gradient(ellipse at center,#000 30%,transparent 75%);
+}
+
+/* ---------- Custom cursor glow ---------- */
+.cursor{
+  position:fixed;top:0;left:0;width:14px;height:14px;border-radius:50%;
+  background:var(--primary);pointer-events:none;z-index:9999;
+  transform:translate(-50%,-50%);
+  box-shadow:0 0 18px 6px rgba(94,234,212,0.55);
+  transition:width .2s,height .2s,background .2s;
+  mix-blend-mode:screen;
+}
+.cursor.ring{
+  width:42px;height:42px;background:transparent;
+  border:1.5px solid rgba(94,234,212,0.5);
+  box-shadow:0 0 30px 8px rgba(94,234,212,0.2);
+  transition:transform .18s var(--ease),width .2s,height .2s;
+}
+@media (pointer:coarse){ .cursor{display:none} }
+
+/* ---------- Layout primitives ---------- */
+section{
+  position:relative;
+  min-height:100vh;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:120px 24px;
+  text-align:center;
+}
+.wrap{width:min(1100px,100%);margin:0 auto}
+.eyebrow{
+  font-size:.78rem;letter-spacing:.42em;text-transform:uppercase;
+  color:var(--primary);font-weight:700;margin-bottom:18px;
+  opacity:0;transform:translateY(16px);
+  transition:opacity .8s var(--ease),transform .8s var(--ease);
+}
+h2.title{
+  font-size:clamp(2.2rem,6vw,4.2rem);
+  font-weight:800;letter-spacing:-.02em;line-height:1.05;
+  background:linear-gradient(120deg,#fff,var(--primary) 60%,var(--primary-2));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  margin-bottom:22px;
+  opacity:0;transform:translateY(28px);
+  transition:opacity .9s var(--ease),transform .9s var(--ease);
+}
+section.in .eyebrow,
+section.in h2.title{opacity:1;transform:none}
+section.in h2.title{transition-delay:.08s}
+
+.lead{
+  font-size:clamp(1rem,2vw,1.25rem);color:var(--ink-dim);
+  max-width:680px;margin:0 auto 48px;
+  opacity:0;transform:translateY(20px);
+  transition:opacity .9s var(--ease) .15s,transform .9s var(--ease) .15s;
+}
+section.in .lead{opacity:1;transform:none}
+
+/* Glass card */
+.glass{
+  background:var(--glass);
+  border:1px solid var(--glass-brd);
+  border-radius:var(--radius);
+  backdrop-filter:blur(18px) saturate(140%);
+  -webkit-backdrop-filter:blur(18px) saturate(140%);
+  box-shadow:var(--shadow);
+}
+
+/* Buttons */
+.btn{
+  position:relative;overflow:hidden;
+  display:inline-flex;align-items:center;gap:10px;
+  padding:16px 34px;border-radius:999px;border:1px solid var(--glass-brd);
+  font:inherit;font-weight:700;font-size:1.05rem;color:#04121a;
+  background:linear-gradient(120deg,var(--primary),var(--primary-2));
+  cursor:none;letter-spacing:.01em;
+  box-shadow:0 12px 40px -8px rgba(94,234,212,0.6);
+  transition:transform .25s var(--ease),box-shadow .25s var(--ease);
+}
+@media (pointer:coarse){ .btn{cursor:pointer} }
+.btn:hover{transform:translateY(-3px);box-shadow:0 22px 55px -10px rgba(94,234,212,0.8)}
+.btn .ripple{position:absolute;border-radius:50%;background:rgba(255,255,255,0.5);
+  transform:translate(-50%,-50%) scale(0);pointer-events:none;animation:rip .7s var(--ease) forwards}
+@keyframes rip{to{transform:translate(-50%,-50%) scale(2.6);opacity:0}}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--glass-brd);box-shadow:none}
+.btn.ghost:hover{background:var(--glass)}
+.btn.huge{font-size:clamp(1.3rem,3.4vw,2rem);padding:24px 56px;border-radius:999px}
+
+/* ---------- HERO ---------- */
+#hero{padding-top:0;padding-bottom:0}
+.hero-title{
+  font-size:clamp(2.6rem,9vw,7rem);font-weight:900;letter-spacing:-.04em;line-height:1;
+  background:linear-gradient(120deg,#fff 10%,var(--primary) 50%,var(--primary-2) 80%,#fff);
+  background-size:220% 220%;
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  animation:shine 6s var(--ease) infinite,heroIn 1.4s var(--ease) both;
+}
+@keyframes shine{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+@keyframes heroIn{0%{opacity:0;transform:translateY(40px) scale(.96)}100%{opacity:1;transform:none}}
+.hero-sub{
+  margin-top:22px;font-size:clamp(1.05rem,2.4vw,1.5rem);color:var(--ink-dim);
+  font-style:italic;max-width:720px;opacity:0;animation:fadeUp 1s var(--ease) .5s both;
+}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+.hero-warn{
+  margin-top:18px;font-size:.85rem;color:var(--ink-faint);max-width:560px;
+  opacity:0;animation:fadeUp 1s var(--ease) .8s both;
+}
+.hero-warn b{color:var(--accent)}
+#beginBtn{margin-top:48px;animation:fadeUp 1s var(--ease) .9s both,pulse 3s var(--ease) 1.9s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 12px 40px -8px rgba(94,234,212,0.6)}50%{box-shadow:0 12px 60px -4px rgba(94,234,212,0.95)}}
+.scroll-hint{margin-top:60px;color:var(--ink-faint);font-size:.8rem;letter-spacing:.3em;text-transform:uppercase;
+  animation:fadeUp 1s var(--ease) 1.3s both,bob 2.4s var(--ease) 2.3s infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(8px)}}
+
+/* Floating particles container */
+#particles{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden}
+.particle{position:absolute;opacity:.5;will-change:transform}
+.page{width:34px;height:44px;border-radius:4px;
+  background:linear-gradient(180deg,#fff,#dbe4ff);
+  box-shadow:0 6px 18px rgba(0,0,0,.4);opacity:.18;
+  border:1px solid rgba(255,255,255,.4)}
+.page::after{content:"";position:absolute;inset:8px 6px;
+  background:repeating-linear-gradient(#9aa6cf 0 2px,transparent 2px 7px);opacity:.6}
+.pencil{width:8px;height:46px;border-radius:2px;opacity:.5;
+  background:linear-gradient(180deg,#fbbf24 80%,#f59e0b 80%,#f59e0b 88%,#92400e 88%);
+  box-shadow:0 0 10px rgba(245,158,11,.4)}
+.pencil::before{content:"";position:absolute;top:-6px;left:50%;transform:translateX(-50%);
+  width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-bottom:6px solid #3a2a12}
+
+/* ---------- Timeline (Section 1) ---------- */
+.timeline{display:flex;flex-direction:column;gap:0;width:min(620px,100%);margin:0 auto}
+.tstep{display:flex;align-items:center;gap:18px;padding:18px 0;position:relative;
+  opacity:0;transform:translateX(-30px);transition:all .7s var(--ease)}
+.tstep.in{opacity:1;transform:none}
+.tstep .ico{flex:0 0 56px;width:56px;height:56px;border-radius:16px;display:grid;place-items:center;
+  background:var(--glass);border:1px solid var(--glass-brd);font-size:1.6rem}
+.tstep .txt{text-align:left}
+.tstep .txt b{display:block;font-size:1.05rem}
+.tstep .txt span{color:var(--ink-faint);font-size:.92rem}
+.tstep::after{content:"";position:absolute;left:27px;top:74px;width:2px;height:24px;
+  background:linear-gradient(180deg,var(--glass-brd),transparent)}
+.tstep:last-child::after{display:none}
+
+/* ---------- Loading screen (Section 2) ---------- */
+.term{padding:40px;width:min(560px,100%);margin:0 auto;font-family:var(--mono);text-align:left}
+.term .ln{color:var(--primary);font-size:1rem;margin-bottom:6px;min-height:1.4em}
+.term .ln.dim{color:var(--ink-faint)}
+.term .pbar{display:flex;align-items:center;gap:10px;margin:14px 0 22px;font-family:var(--mono);color:var(--accent)}
+.term .pbar .track{flex:1;height:18px;border-radius:999px;background:var(--glass);overflow:hidden}
+.term .pbar .fill{height:100%;width:0;border-radius:999px;background:linear-gradient(90deg,var(--accent),var(--accent-2));transition:width 1.6s var(--ease)}
+.term .pbar .pct{font-weight:800;color:var(--accent)}
+.term .stat-grid{display:grid;grid-template-columns:1fr auto;gap:10px 18px;margin-top:8px}
+.term .stat-grid .k{color:var(--ink-dim)}
+.term .stat-grid .v{color:var(--ink);font-weight:700;text-align:right}
+.term .stat-grid .v.bad{color:var(--bad)}
+.term .stat-grid .v.good{color:var(--good)}
+.term .sync{margin-top:22px;color:var(--accent-2);font-weight:800;font-size:1.05rem}
+
+/* ---------- Graphs (Section 3) ---------- */
+.graphs{display:grid;grid-template-columns:1fr;gap:28px;width:min(960px,100%);margin:0 auto}
+.bars{padding:30px;display:flex;flex-direction:column;gap:22px}
+.bar-row{text-align:left}
+.bar-row .lbl{display:flex;justify-content:space-between;font-size:.95rem;margin-bottom:8px;color:var(--ink-dim)}
+.bar-track{height:22px;border-radius:999px;background:var(--glass);overflow:hidden}
+.bar-fill{height:100%;width:0;border-radius:999px;
+  background:linear-gradient(90deg,var(--primary),var(--primary-2));transition:width 1.4s var(--ease)}
+.bar-fill.warn{background:linear-gradient(90deg,var(--accent),var(--accent-2))}
+.bar-fill.low{background:linear-gradient(90deg,#64748b,#94a3b8)}
+.bar-fill.gap{background:linear-gradient(90deg,var(--bad),var(--accent-2))}
+.note-progress{padding:30px;text-align:left}
+.note-progress h3{font-size:1.2rem;margin-bottom:18px;color:var(--ink)}
+.note-row{margin-bottom:18px}
+.note-row .lbl{display:flex;justify-content:space-between;font-size:.95rem;margin-bottom:8px;color:var(--ink-dim)}
+.note-row .lbl b{color:var(--ink)}
+.note-row.gap .lbl b{color:var(--bad)}
+.note-row.gap .track{background:transparent;border:1px dashed var(--glass-brd)}
+.note-row.gap .fill{background:linear-gradient(90deg,var(--bad),var(--accent-2))}
+
+/* ---------- NASA (Section 4) ---------- */
+.nasa{padding:50px 40px;max-width:640px;margin:0 auto}
+.nasa .huge{font-size:clamp(2rem,6vw,3.4rem);font-weight:900;line-height:1.1;
+  background:linear-gradient(120deg,#fff,var(--accent),var(--accent-2));
+  -webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:24px}
+.nasa .body{font-size:1.15rem;color:var(--ink-dim);line-height:1.8}
+.nasa .body b{color:var(--accent);font-size:1.4rem;font-weight:800}
+.nasa .err{margin-top:20px;color:var(--ink-faint);font-size:.85rem;font-style:italic}
+
+/* ---------- Finger Health (Section 5) ---------- */
+.report{padding:40px;width:min(620px,100%);margin:0 auto;text-align:left}
+.report h3{font-size:1.6rem;margin-bottom:20px;color:var(--ink);display:flex;align-items:center;gap:10px}
+.report .rrow{display:grid;grid-template-columns:160px 1fr;gap:12px 18px;padding:14px 0;border-top:1px solid var(--glass-brd)}
+.report .rrow .k{color:var(--ink-faint);font-size:.95rem;letter-spacing:.05em;text-transform:uppercase}
+.report .rrow .v{color:var(--ink);font-weight:700}
+.report .rrow .v.warn{color:var(--accent)}
+.report .rrow .v.rx{color:var(--primary);font-size:1.3rem;font-weight:800}
+
+/* ---------- Slider (Section 6) ---------- */
+.slider-card{padding:40px;width:min(640px,100%);margin:0 auto}
+.switch-row{display:flex;align-items:center;justify-content:center;gap:18px;margin-bottom:30px}
+.switch-row .off,.switch-row .on{font-weight:800;letter-spacing:.1em;font-size:1rem;transition:color .3s}
+.switch-row .off{color:var(--bad)}
+.switch-row .on{color:var(--ink-faint)}
+.slider-card.on .switch-row .off{color:var(--ink-faint)}
+.slider-card.on .switch-row .on{color:var(--good)}
+.toggle{width:140px;height:54px;border-radius:999px;background:var(--glass);border:1px solid var(--glass-brd);
+  position:relative;cursor:none;transition:background .4s var(--ease)}
+@media (pointer:coarse){ .toggle{cursor:pointer} }
+.toggle .knob{position:absolute;top:5px;left:5px;width:44px;height:44px;border-radius:50%;
+  background:linear-gradient(120deg,var(--bad),var(--accent-2));transition:all .45s var(--ease);
+  box-shadow:0 6px 18px rgba(251,113,133,.5)}
+.slider-card.on .toggle{background:rgba(52,211,153,0.15)}
+.slider-card.on .toggle .knob{left:91px;background:linear-gradient(120deg,var(--good),var(--primary))}
+.status-block{margin-top:10px;text-align:left;font-family:var(--mono);min-height:180px}
+.status-block .ln{color:var(--ink-dim);font-size:1rem;margin-bottom:8px;opacity:0;transform:translateY(8px);transition:all .5s var(--ease)}
+.status-block .ln.show{opacity:1;transform:none}
+.status-block .ln.bad{color:var(--bad)}
+.status-block .ln.good{color:var(--good)}
+
+/* ---------- Counter (Section 7) ---------- */
+.counter-big{font-size:clamp(4rem,16vw,11rem);font-weight:900;letter-spacing:-.04em;line-height:1;
+  background:linear-gradient(120deg,var(--accent),var(--accent-2),#fff);
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.calc-line{color:var(--ink-dim);font-size:1.05rem;min-height:1.6em;margin:6px 0;opacity:0;transform:translateY(8px);transition:all .5s var(--ease)}
+.calc-line.show{opacity:1;transform:none}
+.calc-line.final{color:var(--accent);font-weight:800;font-size:1.3rem}
+.time-list{list-style:none;display:flex;flex-direction:column;gap:10px;margin-top:30px;text-align:left;width:min(420px,100%);margin-left:auto;margin-right:auto}
+.time-list li{display:flex;align-items:center;gap:12px;font-size:1.05rem;color:var(--ink-dim);opacity:0;transform:translateX(-16px);transition:all .6s var(--ease)}
+.time-list li.in{opacity:1;transform:none}
+.time-list li .tick{color:var(--good);font-weight:800}
+
+/* ---------- Testimonials (Section 8) ---------- */
+.testi{display:flex;gap:24px;justify-content:center;flex-wrap:wrap;width:min(1000px,100%);margin:0 auto;perspective:1200px}
+.tcard{flex:1 1 260px;max-width:320px;padding:28px;text-align:left;opacity:0;transform:translateY(40px);
+  transition:opacity .8s var(--ease),transform .8s var(--ease)}
+.tcard.in{opacity:1;transform:translateY(0)}
+.tcard .stars{color:var(--warn);letter-spacing:3px;margin-bottom:14px}
+.tcard p{font-size:1.05rem;margin-bottom:16px;line-height:1.5}
+.tcard .who{color:var(--ink-faint);font-size:.9rem;font-style:italic}
+.tcard.spin{animation:slowTilt 8s ease-in-out infinite}
+@keyframes slowTilt{0%,100%{transform:rotateY(0) translateY(0)}50%{transform:rotateY(6deg) translateY(-6px)}}
+
+/* ---------- Stress Meter (Section 9) ---------- */
+.stress-card{padding:40px;width:min(620px,100%);margin:0 auto;text-align:left}
+.stress-card .lbl{color:var(--ink-dim);font-size:.95rem;margin-bottom:8px}
+.stress-track{height:24px;border-radius:999px;background:var(--glass);overflow:hidden;margin-bottom:22px}
+.stress-fill{height:100%;border-radius:999px;width:50%;background:linear-gradient(90deg,var(--accent),var(--accent-2));transition:width .8s var(--ease),background .8s}
+.stress-fill.high{background:linear-gradient(90deg,var(--bad),var(--accent-2))}
+.stress-fill.low{background:linear-gradient(90deg,var(--good),var(--primary))}
+.stress-line{font-size:1.05rem;color:var(--ink);margin:14px 0;min-height:1.6em;opacity:0;transform:translateY(8px);transition:all .5s var(--ease)}
+.stress-line.show{opacity:1;transform:none}
+.stress-line .who{color:var(--ink-faint);font-size:.85rem;margin-left:8px}
+
+/* ---------- AI Prediction (Section 10) ---------- */
+.predict{padding:40px;width:min(560px,100%);margin:0 auto;text-align:left;font-family:var(--mono)}
+.predict .ln{color:var(--primary);font-size:1rem;margin-bottom:8px;min-height:1.4em}
+.predict .ln.dim{color:var(--ink-faint)}
+.predict .q{color:var(--ink);font-size:1.1rem;margin:18px 0;font-style:italic}
+.predict .big{font-size:clamp(3rem,10vw,6rem);font-weight:900;color:var(--accent);text-align:center;margin:20px 0}
+.predict .conf{color:var(--good);font-weight:800;text-align:center;font-size:1.1rem}
+
+/* ---------- Achievement popup ---------- */
+.achv{position:fixed;left:50%;bottom:40px;transform:translateX(-50%) translateY(140%);
+  z-index:9996;width:min(360px,92vw);padding:24px 26px;border-radius:18px;
+  background:linear-gradient(135deg,rgba(245,158,11,0.18),rgba(251,113,133,0.18));
+  border:1px solid rgba(245,158,11,0.5);backdrop-filter:blur(18px);
+  box-shadow:0 20px 60px -10px rgba(245,158,11,0.5);
+  transition:transform .6s var(--ease);text-align:left}
+.achv.show{transform:translateX(-50%) translateY(0)}
+.achv .top{display:flex;align-items:center;gap:10px;font-size:.78rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);font-weight:800}
+.achv .top .trophy{font-size:1.4rem}
+.achv h4{font-size:1.3rem;margin:10px 0 6px;color:var(--ink)}
+.achv p{color:var(--ink-dim);font-size:.95rem;margin-bottom:10px}
+.achv .xp{color:var(--good);font-weight:800;font-size:.95rem}
+
+/* ---------- Windows update overlay ---------- */
+#winUpdate{position:fixed;inset:0;z-index:9997;background:#0a0c18;display:none;flex-direction:column;
+  align-items:center;justify-content:center;text-align:center;gap:30px}
+#winUpdate.show{display:flex}
+.winu .ring{width:64px;height:64px;border-radius:50%;border:3px solid var(--glass);border-top-color:var(--primary);
+  animation:spin 1s linear infinite;margin:0 auto 24px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.winu .msg{color:var(--ink-dim);font-size:1.05rem}
+.winu .title{color:var(--ink);font-size:1.3rem;font-weight:700}
+.winu .pct{color:var(--primary);font-size:3rem;font-weight:800;font-family:var(--mono);min-height:1.2em}
+.winu .done{color:var(--good);font-size:1.2rem;font-weight:800;max-width:480px;line-height:1.6}
+
+/* ---------- Certificate ---------- */
+.cert{margin-top:50px;padding:50px 40px;max-width:600px;opacity:0;transform:translateY(40px) scale(.95);
+  transition:all 1s var(--ease);pointer-events:none}
+.cert.in{opacity:1;transform:none}
+.cert .seal{font-size:.8rem;letter-spacing:.4em;color:var(--primary);text-transform:uppercase;margin-bottom:18px}
+.cert h3{font-size:1.6rem;margin-bottom:8px;font-weight:800}
+.cert .name{font-size:2.4rem;font-weight:900;background:linear-gradient(120deg,var(--accent),var(--accent-2));
+  -webkit-background-clip:text;background-clip:text;color:transparent;margin:14px 0}
+.cert .body{color:var(--ink-dim);margin-bottom:24px;line-height:1.7}
+.cert .body .glow{color:var(--primary);font-weight:800}
+.cert .benefits{list-style:none;display:flex;flex-direction:column;gap:10px;margin-bottom:26px;text-align:left}
+.cert .benefits li{display:flex;align-items:center;gap:12px;font-size:1rem;color:var(--ink-dim)}
+.cert .benefits li .tick{color:var(--good);font-weight:800}
+.cert .signed{display:flex;justify-content:space-between;align-items:flex-end;margin-top:30px;font-size:.95rem}
+.cert .stamp{border:3px solid var(--good);color:var(--good);padding:8px 18px;border-radius:8px;
+  font-weight:800;letter-spacing:.2em;transform:rotate(-12deg);opacity:.9}
+
+/* ---------- Finale ---------- */
+#finale{transition:all 1.2s var(--ease)}
+#finale.black{background:#000}
+.finale-line{font-size:clamp(1.4rem,4vw,2.4rem);color:var(--ink);font-weight:700;line-height:1.4;
+  opacity:0;transform:translateY(20px);transition:all 1.2s var(--ease);max-width:760px;margin:10px auto}
+.finale-line.show{opacity:1;transform:none}
+.finale-line .punch{color:var(--primary)}
+#finalBtn{margin-top:48px;opacity:0;transform:translateY(20px) scale(.9);transition:all 1s var(--ease)}
+#finalBtn.show{opacity:1;transform:none}
+
+/* ---------- Confetti / fireworks canvas ---------- */
+#fx{position:fixed;inset:0;z-index:9998;pointer-events:none}
+
+/* ---------- Loading overlay ---------- */
+#loader{position:fixed;inset:0;z-index:9997;background:rgba(5,6,13,0.92);backdrop-filter:blur(8px);
+  display:grid;place-items:center;text-align:center;transition:opacity .6s var(--ease)}
+#loader.hide{opacity:0;pointer-events:none}
+.loader-ring{width:60px;height:60px;border-radius:50%;border:3px solid var(--glass);
+  border-top-color:var(--primary);animation:spin 1s linear infinite;margin:0 auto 20px}
+#loader .lmsg{color:var(--primary);letter-spacing:.05em;font-size:1rem;min-height:24px}
+
+/* ---------- Ultra mode ---------- */
+body.ultra{animation:ultraBg 3s linear infinite}
+@keyframes ultraBg{0%{filter:hue-rotate(0)}100%{filter:hue-rotate(360deg)}}
+
+/* logo */
+.logo{position:fixed;top:22px;left:24px;z-index:100;display:flex;align-items:center;gap:10px;
+  font-weight:800;letter-spacing:.02em;font-size:1rem;color:var(--ink);cursor:none;
+  transition:transform .6s var(--ease)}
+@media (pointer:coarse){ .logo{cursor:pointer} }
+.logo .mark{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;
+  background:linear-gradient(120deg,var(--primary),var(--primary-2));color:#04121a;font-weight:900}
+.logo:hover{transform:rotate(360deg)}
+
+/* tilt cards */
+.tilt{transform-style:preserve-3d;transition:transform .2s var(--ease)}
+
+/* misc reveal */
+.reveal{opacity:0;transform:translateY(30px);transition:all .9s var(--ease)}
+.reveal.in{opacity:1;transform:none}
+
+/* ---------- Language toggle ---------- */
+.lang-toggle{position:fixed;top:22px;right:24px;z-index:100;display:flex;align-items:center;gap:9px;
+  padding:11px 20px;border-radius:999px;border:1px solid var(--glass-brd);background:var(--glass);
+  color:var(--ink);font:inherit;font-weight:700;font-size:.9rem;cursor:none;
+  backdrop-filter:blur(12px) saturate(140%);-webkit-backdrop-filter:blur(12px) saturate(140%);
+  transition:all .25s var(--ease)}
+@media (pointer:coarse){ .lang-toggle{cursor:pointer} }
+.lang-toggle:hover{border-color:var(--primary);color:var(--primary);transform:translateY(-2px);box-shadow:0 10px 30px -8px rgba(94,234,212,.5)}
+.lang-toggle .dot{width:8px;height:8px;border-radius:50%;background:var(--primary);box-shadow:0 0 10px var(--primary);animation:pulse 3s var(--ease) infinite}
+
+footer{padding:60px 24px;text-align:center;color:var(--ink-faint);font-size:.85rem;letter-spacing:.1em}
+</style>
+</head>
+<body>
+
+<!-- Custom cursor -->
+<div class="cursor" id="cur"></div>
+<div class="cursor ring" id="curRing"></div>
+
+<!-- Logo -->
+<div class="logo" id="logo"><span class="mark">S</span> SenseBoard</div>
+
+<!-- Language toggle -->
+<button class="lang-toggle" id="langToggle" type="button"><span class="dot"></span><span id="langLabel">हिन्दी</span></button>
+
+<!-- Particle field -->
+<div id="particles"></div>
+
+<!-- Effects canvas (confetti / fireworks) -->
+<canvas id="fx"></canvas>
+
+<!-- Achievement popup -->
+<div class="achv" id="achv">
+  <div class="top"><span class="trophy">🏆</span><span>Achievement Unlocked</span></div>
+  <h4>Caught Up</h4>
+  <p>Somehow reached the same line as everyone else.</p>
+  <div class="xp">+500 XP</div>
+</div>
+
+<!-- Windows update overlay -->
+<div id="winUpdate">
+  <div class="winu">
+    <div class="ring"></div>
+    <div class="msg">Please wait.</div>
+    <div class="title">Installing... Educational Efficiency Update</div>
+    <div class="pct" id="winuPct">0%</div>
+    <div class="done" id="winuDone" style="display:none"></div>
+  </div>
+</div>
+
+<!-- Loading overlay -->
+<div id="loader">
+  <div>
+    <div class="loader-ring"></div>
+    <div class="lmsg" id="lmsg">Sharpening pencils...</div>
+  </div>
+</div>
+
+<!-- ============================ HERO ============================ -->
+<section id="hero">
+  <div class="wrap">
+    <h1 class="hero-title">Operation: Save Our Wrists</h1>
+    <p class="hero-sub"><center>A completely unbiased, 100% scientifically questionable presentation by Sathvik Kasthala, 7D, an exhausted student with a broken wrist (note due to notes, though).</p>
+    <p class="hero-warn"><b>Warning:</b> This presentation contains dangerous levels of charts, animations, and dramatic exaggeration.</p>
+    <button class="btn" id="beginBtn" data-scroll="#s1">Begin Investigation</button>
+    <div class="scroll-hint">Scroll to continue</div>
+  </div>
+</section>
+
+<!-- ============================ SECTION 1 — Current Situation ============================ -->
+<section id="s1">
+  <div class="wrap">
+    <div class="eyebrow">Section 01</div>
+    <h2 class="title">Current Situation</h2>
+    <p class="lead">A scientifically observed sequence of events that unfolds every single class.</p>
+    <div class="timeline" id="timeline">
+      <div class="tstep"><div class="ico">🔔</div><div class="txt"><b>Bell Rings</b><span>The day begins.</span></div></div>
+      <div class="tstep"><div class="ico">✨</div><div class="txt"><b>Hope Appears</b><span>Maybe this time we'll keep up.</span></div></div>
+      <div class="tstep"><div class="ico">📓</div><div class="txt"><b>Notebook Opens</b><span>Fresh page. Infinite potential.</span></div></div>
+      <div class="tstep"><div class="ico">✍️</div><div class="txt"><b>Pen Starts Working Overtime</b><span>No union. No breaks. No mercy.</span></div></div>
+      <div class="tstep"><div class="ico">🧠</div><div class="txt"><b>Brain Requests Vacation</b><span>Submitted in writing. Denied instantly.</span></div></div>
+      <div class="tstep"><div class="ico">🐢</div><div class="txt"><b>One Student Is Somehow Still Writing Yesterday's Notes</b><span>Time is a flat circle.</span></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ SECTION 2 — Student Experience ============================ -->
+<section id="s2">
+  <div class="wrap">
+    <div class="eyebrow">Section 02</div>
+    <h2 class="title">The Student Experience</h2>
+    <p class="lead">A live readout of what happens inside a student's notebook. Do not try this at home.</p>
+    <div class="glass term" id="term">
+      <div class="ln">Receiving Information...</div>
+      <div class="pbar"><div class="track"><div class="fill" id="termFill"></div></div><span class="pct" id="termPct">0%</span></div>
+      <div class="stat-grid">
+        <div class="k">Teacher</div><div class="v good">100%</div>
+        <div class="k">Student Writing Speed</div><div class="v bad">7%</div>
+      </div>
+      <div class="sync">Estimated Synchronization Time</div>
+      <div class="ln dim" style="font-size:1.2rem;color:var(--accent-2);font-weight:800">Tomorrow.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ SECTION 3 — Scientific Analysis ============================ -->
+<section id="s3">
+  <div class="wrap">
+    <div class="eyebrow">Section 03</div>
+    <h2 class="title">Scientific Analysis</h2>
+    <p class="lead">Peer-reviewed by absolutely nobody, but the data speaks for itself.</p>
+    <div class="graphs">
+      <div class="glass bars" id="bars">
+        <div class="bar-row"><div class="lbl"><span>Trying to spell the word correctly</span><span>80%</span></div><div class="bar-track"><div class="fill warn" data-w="80"></div></div></div>
+        <div class="bar-row"><div class="lbl"><span>Finding where the teacher is</span><span>15%</span></div><div class="bar-track"><div class="fill" data-w="15"></div></div></div>
+        <div class="bar-row"><div class="lbl"><span>Actually understanding</span><span>5%</span></div><div class="bar-track"><div class="fill low" data-w="5"></div></div></div>
+      </div>
+      <div class="glass note-progress">
+        <h3>Notebook Progress</h3>
+        <div class="note-row"><div class="lbl"><b>Teacher</b><span>full speed</span></div><div class="bar-track"><div class="fill" data-w="95"></div></div></div>
+        <div class="note-row"><div class="lbl"><b>Student</b><span>2 lines done</span></div><div class="bar-track"><div class="fill low" data-w="8"></div></div></div>
+        <div class="note-row gap"><div class="lbl"><b>The Gap</b><span>growing</span></div><div class="bar-track"><div class="fill gap" data-w="100"></div></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ SECTION 4 — Fake NASA Research ============================ -->
+<section id="s4">
+  <div class="wrap">
+    <div class="eyebrow">Section 04</div>
+    <h2 class="title">Scientific Research</h2>
+    <p class="lead">Conducted with the highest standards of absolutely no standards.</p>
+    <div class="glass nasa">
+      <div class="huge">"NASA Was Not Contacted."</div>
+      <div class="body">
+        After running zero experiments...<br>
+        we have concluded that<br>
+        displaying notes may reduce<br>
+        "Ma'am... please repeat."<br>
+        by approximately<br>
+        <b>87.3%</b>
+      </div>
+      <div class="err">Margin of error: ±87.3%</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ SECTION 5 — Finger Health Report ============================ -->
+<section id="s5">
+  <div class="wrap">
+    <div class="eyebrow">Section 05</div>
+    <h2 class="title">Finger Health Report</h2>
+    <p class="lead">A medical file nobody asked for, but everyone needed.</p>
+    <div class="glass report">
+      <h3>🏥 Hospital Report</h3>
+      <div class="rrow"><div class="k">Patient</div><div class="v">Entire Class</div></div>
+      <div class="rrow"><div class="k">Condition</div><div class="v warn">Severe Academic Finger Gymnastics</div></div>
+      <div class="rrow"><div class="k">Prescription</div><div class="v rx">SenseBoard — Twice Daily</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ SECTION 6 — Productivity Simulator ============================ -->
+<section id="s6">
+  <div class="wrap">
+    <div class="eyebrow">Section 06</div>
+    <h2 class="title">Productivity Simulator</h2>
+    <p class="lead">Toggle the switch. Watch the classroom transform in real time.</p>
+    <div class="glass slider-card" id="sliderCard">
+      <div class="switch-row"><span class="off">OFF</span><div class="toggle" id="toggle"><div class="knob"></div></div><span class="on">ON</span></div>
+      <div class="status-block" id="statusBlock">
+        <div class="ln bad" data-off>Student Status</div>
+        <div class="ln" data-off>Loading...</div>
+        <div class="ln" data-off>Still writing.</div>
+        <div class="ln" data-off>Still writing.</div>
+        <div class="ln" data-off>Still writing.</div>
+        <div class="ln bad" data-off>Teacher already on next paragraph.</div>
+      </div>
+      <div class="status-block" id="statusBlockOn" style="display:none">
+        <div class="ln good" data-on>Student Status</div>
+        <div class="ln" data-on>Listening.</div>
+        <div class="ln" data-on>Understanding.</div>
+        <div class="ln" data-on>Even asking questions.</div>
+        <div class="ln good" data-on>Scientists confused.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ SECTION 7 — Time Saved ============================ -->
+<section id="s7">
+  <div class="wrap">
+    <div class="eyebrow">Section 07</div>
+    <h2 class="title">Time Saved</h2>
+    <div id="calcBox">
+      <div class="calc-line" data-i="0">Calculating...</div>
+      <div class="calc-line" data-i="1">Calculating...</div>
+      <div class="calc-line" data-i="2">Still Calculating...</div>
+      <div class="calc-line" data-i="3">Consulting Ancient Mathematics...</div>
+      <div class="calc-line final" data-i="4">Final Answer</div>
+    </div>
+    <div class="counter-big" id="counter">0</div>
+    <div style="font-size:1.4rem;color:var(--ink-dim);margin-top:8px">MINUTES</div>
+    <div style="color:var(--ink-faint);margin-top:8px">That's enough time to...</div>
+    <ul class="time-list" id="timeList">
+      <li><span class="tick">✔</span> Finish lunch.</li>
+      <li><span class="tick">✔</span> Play one football match.</li>
+      <li><span class="tick">✔</span> Finish homework.</li>
+      <li><span class="tick">✔</span> Start another presentation.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============================ SECTION 8 — Testimonials ============================ -->
+<section id="s8">
+  <div class="wrap">
+    <div class="eyebrow">Section 08</div>
+    <h2 class="title">Testimonials</h2>
+    <p class="lead">Real quotes from real students who definitely exist.</p>
+    <div class="testi" id="testi">
+      <div class="glass tcard spin"><div class="stars">★★★★★</div><p>"For the first time in history, my handwriting remained in the same language."</p><div class="who">— Sai Idhant</div></div>
+      <div class="glass tcard spin"><div class="stars">★★★★★</div><p>"I looked up from my notebook and discovered there was a teacher in front of the class."</p><div class="who">— Vishruth Murlidharan</div></div>
+      <div class="glass tcard spin"><div class="stars">★★★★★</div><p>"My pen finally received its well-deserved retirement benefits."</p><div class="who">—Sathvik Kasthala (narrator and creator of website)</div></div>
+      <div class="glass tcard spin"><div class="stars">★★★★★</div><p>"I remembered what was being taught instead of just remembering where my notebook margin ended."</p><div class="who">— Class Representative</div></div>
+      <div class="glass tcard spin"><div class="stars">★★★★★</div><p>"My fingers have submitted a formal thank-you letter."</p><div class="who">— Grateful Hand</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ SECTION 9 — Live Stress Meter ============================ -->
+<section id="s9">
+  <div class="wrap">
+    <div class="eyebrow">Section 09</div>
+    <h2 class="title">Live Stress Meter</h2>
+    <p class="lead">Real-time classroom stress, measured with science that hasn't been invented yet.</p>
+    <div class="glass stress-card" id="stressCard">
+      <div class="lbl">Student Stress</div>
+      <div class="stress-track"><div class="stress-fill" id="stressFill"></div></div>
+      <div class="stress-line" data-i="0"><b>Teacher says:</b> "Last sentence." <span class="who">— stress decreases</span></div>
+      <div class="stress-line" data-i="1"><b>Teacher immediately says:</b> "One more point..." <span class="who">— stress spikes</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ SECTION 10 — AI Prediction Engine ============================ -->
+<section id="s10">
+  <div class="wrap">
+    <div class="eyebrow">Section 10</div>
+    <h2 class="title">AI Prediction Engine</h2>
+    <p class="lead">Powered by guessing, trained on every class ever.</p>
+    <div class="glass predict" id="predict">
+      <div class="ln" id="predLn1">Predicting...</div>
+      <div class="q">How many students will ask "Which line are we on?"</div>
+      <div class="ln dim">Today's Prediction</div>
+      <div class="big" id="predBig">0</div>
+      <div class="conf">Confidence: Extremely High</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ FINALE ============================ -->
+<section id="finale">
+  <div class="wrap">
+    <div class="eyebrow">Grand Finale</div>
+    <h2 class="title">Certificate of Classroom Efficiency</h2>
+    <div class="glass cert" id="cert">
+      <div class="seal">🎓 Certificate of Classroom Efficiency</div>
+      <h3>Awarded To</h3>
+      <div class="name">Vrushali Ma'am</div>
+      <div class="body">For embracing the revolutionary educational technology known as...<br><span class="glow">✨ Displaying Notes on the SenseBoard ✨</span></div>
+      <div style="color:var(--ink);font-weight:700;margin-bottom:14px">Official Benefits:</div>
+      <ul class="benefits">
+        <li><span class="tick">✔</span> Happier students</li>
+        <li><span class="tick">✔</span> Less "Ma'am, please repeat."</li>
+        <li><span class="tick">✔</span> Fewer tired wrists</li>
+        <li><span class="tick">✔</span> More listening</li>
+        <li><span class="tick">✔</span> Cleaner notebooks</li>
+        <li><span class="tick">✔</span> Maximum classroom efficiency</li>
+      </ul>
+      <div class="signed">
+        <div>Seal:<br><b>Certified by the Totally Serious Institute of Classroom Science™</b></div>
+        <div class="stamp">APPROVED</div>
+      </div>
+    </div>
+    <button class="btn" id="displayBtn" style="margin-top:40px">Display the Notes</button>
+  </div>
+</section>
+
+<!-- ============================ FINAL SCREEN ============================ -->
+<section id="finalScreen">
+  <div class="wrap">
+    <div class="finale-line" id="fLine1"><b>A pen is mightier than the keyboard...</b></div>
+    <div class="finale-line" id="fLine2">...unless the keyboard is connected to a <span class="punch">SenseBoard</span>.</div>
+    <button class="btn huge" id="finalBtn">Let's Make Learning Easier for Everyone ❤️</button>
+  </div>
+</section>
+
+<footer>Operation: Save Our Wrists · A presentation by the students · No wrists were harmed in the making of this page</footer>
+
+<script>
+/* ============================================================
+   OPERATION: SAVE OUR WRISTS — interaction logic
+   ============================================================ */
+(function(){
+  "use strict";
+
+  /* ---------- Custom cursor ---------- */
+  var cur=document.getElementById('cur'),ring=document.getElementById('curRing');
+  var mx=0,my=0,rx=0,ry=0;
+  window.addEventListener('mousemove',function(e){
+    mx=e.clientX;my=e.clientY;
+    cur.style.left=mx+'px';cur.style.top=my+'px';
+  });
+  function ringLoop(){
+    rx+=(mx-rx)*0.18;ry+=(my-ry)*0.18;
+    ring.style.left=rx+'px';ring.style.top=ry+'px';
+    requestAnimationFrame(ringLoop);
+  }
+  ringLoop();
+  document.addEventListener('mouseover',function(e){
+    if(e.target.closest('.btn,.toggle,.tcard,.logo,a')){ring.classList.add('cursor');}
+  });
+
+  /* ---------- Particle field ---------- */
+  var pf=document.getElementById('particles');
+  var parts=[];
+  for(var i=0;i<26;i++){
+    var p=document.createElement('div');
+    p.className='particle '+(Math.random()<0.5?'page':'pencil');
+    p.style.left=Math.random()*100+'vw';
+    p.style.top=Math.random()*100+'vh';
+    var s=0.6+Math.random()*0.8;
+    p.style.transform='scale('+s+')';
+    pf.appendChild(p);
+    parts.push({el:p,x:parseFloat(p.style.left),y:parseFloat(p.style.top),
+      vx:(Math.random()-0.5)*0.04,vy:(Math.random()-0.5)*0.04,rot:Math.random()*360,vr:(Math.random()-0.5)*0.3});
+  }
+  var px=0,py=0,tx=0,ty=0;
+  window.addEventListener('mousemove',function(e){
+    tx=(e.clientX/window.innerWidth-0.5)*2;
+    ty=(e.clientY/window.innerHeight-0.5)*2;
+  });
+  function partLoop(){
+    px+=(tx-px)*0.05;py+=(ty-py)*0.05;
+    for(var i=0;i<parts.length;i++){
+      var p=parts[i];
+      p.x+=p.vx;p.y+=p.vy;p.rot+=p.vr;
+      if(p.x>100)p.x=0;if(p.x<0)p.x=100;
+      if(p.y>100)p.y=0;if(p.y<0)p.y=100;
+      p.el.style.left=p.x+'vw';
+      p.el.style.top=p.y+'vh';
+      p.el.style.transform='scale('+ (0.6+Math.abs(Math.sin(p.rot*0.01))*0.4) +') rotate('+p.rot+'deg) translate('+(px*20)+'px,'+(py*20)+'px)';
+    }
+    requestAnimationFrame(partLoop);
+  }
+  partLoop();
+
+  pf.addEventListener('mouseover',function(e){
+    if(e.target.classList.contains('pencil')){e.target.style.transition='transform .6s';e.target.style.transform+=' rotate(720deg)';}
+  });
+
+  /* ---------- Loading messages ---------- */
+  var lmsgs=[['Sharpening pencils...','पेंसिलें तेज़ कर रहे हैं...'],['Convincing the teacher...','शिक्षिका को मना रहे हैं...'],['Calculating handwriting speed...','लिखावट की गति नाप रहे हैं...'],['Finding missing notebook...','गुमशुदा नोटबुक ढूँढ रहे हैं...'],['Loading educational excellence...','शैक्षणिक उत्कृष्टता लोड हो रही है...'],['Aligning the stars...','तारों को क्रम में लगा रहे हैं...'],['Consulting the wrist committee...','कलाई समिति से सलाह ले रहे हैं...']];
+  var lmsgEl=document.getElementById('lmsg');
+  var lmsgI=0;
+  var lmsgInt=setInterval(function(){
+    lmsgI=(lmsgI+1)%lmsgs.length;
+    var p=lmsgs[lmsgI];lmsgEl.textContent=window.__hi?p[1]:p[0];
+  },900);
+  window.addEventListener('load',function(){
+    setTimeout(function(){
+      document.getElementById('loader').classList.add('hide');
+      clearInterval(lmsgInt);
+    },2200);
+  });
+
+  /* ---------- Scroll reveal ---------- */
+  var io=new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      if(en.isIntersecting){
+        en.target.classList.add('in');
+        if(en.target.id==='s1')revealTimeline();
+        if(en.target.id==='s2')runTerm();
+        if(en.target.id==='s3')revealGraphs();
+        if(en.target.id==='s7')runCounter();
+        if(en.target.id==='s8')revealTesti();
+        if(en.target.id==='s9')runStress();
+        if(en.target.id==='s10')runPredict();
+        io.unobserve(en.target);
+      }
+    });
+  },{threshold:0.25});
+  document.querySelectorAll('section,.reveal').forEach(function(s){io.observe(s)});
+
+  /* ---------- Smooth scroll buttons ---------- */
+  document.querySelectorAll('[data-scroll]').forEach(function(b){
+    b.addEventListener('click',function(){
+      var t=document.querySelector(b.getAttribute('data-scroll'));
+      if(t)t.scrollIntoView({behavior:'smooth'});
+    });
+  });
+
+  /* ---------- Button ripples ---------- */
+  document.querySelectorAll('.btn').forEach(function(b){
+    b.addEventListener('click',function(e){
+      var r=document.createElement('span');r.className='ripple';
+      var rect=b.getBoundingClientRect();
+      r.style.left=(e.clientX-rect.left)+'px';r.style.top=(e.clientY-rect.top)+'px';
+      r.style.width=r.style.height=Math.max(rect.width,rect.height)+'px';
+      b.appendChild(r);setTimeout(function(){r.remove();},700);
+    });
+  });
+
+  /* ---------- Section 1: timeline ---------- */
+  function revealTimeline(){
+    var steps=document.querySelectorAll('#timeline .tstep');
+    steps.forEach(function(s,i){setTimeout(function(){s.classList.add('in');},i*350);});
+  }
+
+  /* ---------- Section 2: terminal loading ---------- */
+  var termRun=false;
+  function runTerm(){
+    if(termRun)return;termRun=true;
+    var fill=document.getElementById('termFill'),pct=document.getElementById('termPct');
+    var t=0,dur=2000,start=performance.now();
+    function step(now){
+      var p=Math.min((now-start)/dur,1);
+      fill.style.width=(p*100)+'%';
+      pct.textContent=Math.round(p*100)+'%';
+      if(p<1)requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  /* ---------- Section 3: graphs ---------- */
+  function revealGraphs(){
+    document.querySelectorAll('#bars .bar-fill').forEach(function(f,i){
+      setTimeout(function(){f.style.width=f.getAttribute('data-w')+'%';},i*250);
+    });
+    document.querySelectorAll('.note-progress .fill').forEach(function(f,i){
+      setTimeout(function(){f.style.width=f.getAttribute('data-w')+'%';},i*250+400);
+    });
+  }
+
+  /* ---------- Section 6: slider ---------- */
+  var card=document.getElementById('sliderCard'),toggle=document.getElementById('toggle');
+  var blockOff=document.getElementById('statusBlock'),blockOn=document.getElementById('statusBlockOn');
+  var on=false;
+  toggle.addEventListener('click',function(){
+    on=!on;card.classList.toggle('on',on);
+    blockOff.style.display=on?'none':'block';
+    blockOn.style.display=on?'block':'none';
+    var active=on?blockOn:blockOff;
+    var lines=active.querySelectorAll('.ln');
+    lines.forEach(function(l){l.classList.remove('show')});
+    lines.forEach(function(l,i){setTimeout(function(){l.classList.add('show');},i*550+200)});
+    if(on)burstConfetti(window.innerWidth/2,window.innerHeight/2,30);
+  });
+
+  /* ---------- Section 7: counter + calc lines ---------- */
+  function runCounter(){
+    var lines=document.querySelectorAll('#calcBox .calc-line');
+    lines.forEach(function(l){l.classList.remove('show')});
+    lines.forEach(function(l,i){setTimeout(function(){l.classList.add('show');},i*700)});
+    var el=document.getElementById('counter');
+    setTimeout(function(){animateCount(el,0,40,1800,'');},5*700);
+    setTimeout(function(){
+      var lis=document.querySelectorAll('#timeList li');
+      lis.forEach(function(li,i){setTimeout(function(){li.classList.add('in');},i*250)});
+      fireworks();
+    },5*700+1900);
+  }
+  function animateCount(el,from,to,dur,suffix){
+    var start=performance.now();suffix=suffix||'';
+    function step(now){
+      var p=Math.min((now-start)/dur,1);
+      var e=1-Math.pow(1-p,3);
+      el.textContent=Math.round(from+(to-from)*e)+suffix;
+      if(p<1)requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  /* ---------- Section 8 reveal ---------- */
+  function revealTesti(){
+    document.querySelectorAll('#testi .tcard').forEach(function(c,i){
+      setTimeout(function(){c.classList.add('in');},i*180);
+    });
+  }
+
+  /* ---------- Section 9: stress meter ---------- */
+  var stressRun=false;
+  function runStress(){
+    if(stressRun)return;stressRun=true;
+    var fill=document.getElementById('stressFill');
+    var lines=document.querySelectorAll('#stressCard .stress-line');
+    lines.forEach(function(l){l.classList.remove('show')});
+    /* phase 1: high stress */
+    fill.classList.add('high');fill.style.width='90%';
+    setTimeout(function(){
+      lines[0].classList.add('show');
+      fill.classList.remove('high');fill.classList.add('low');fill.style.width='25%';
+    },1200);
+    /* phase 2: spike */
+    setTimeout(function(){
+      lines[1].classList.add('show');
+      fill.classList.remove('low');fill.classList.add('high');fill.style.width='100%';
+    },3000);
+  }
+
+  /* ---------- Section 10: AI prediction ---------- */
+  var predRun=false;
+  function runPredict(){
+    if(predRun)return;predRun=true;
+    var ln1=document.getElementById('predLn1'),big=document.getElementById('predBig');
+    var msgs=[['Predicting...','भविष्यवाणी कर रहे हैं...'],['Thinking...','सोच रहे हैं...'],['Consulting the students...','छात्रों से सलाह ले रहे हैं...'],['Almost certain...','लगभग निश्चित...']];
+    var mi=0;
+    var miInt=setInterval(function(){var p=msgs[mi=(mi+1)%msgs.length];ln1.textContent=window.__hi?p[1]:p[0];},700);
+    setTimeout(function(){
+      clearInterval(miInt);
+      ln1.textContent=window.__hi?'भविष्यवाणी पूर्ण।':'Prediction complete.';
+      animateCount(big,0,17,1400,'');
+    },3000);
+  }
+
+  /* ---------- Finale: certificate + windows update + final screen ---------- */
+  var displayBtn=document.getElementById('displayBtn'),cert=document.getElementById('cert'),finale=document.getElementById('finale');
+  var celebrated=false;
+  displayBtn.addEventListener('click',function(){
+    finale.classList.add('celebrate');
+    cert.classList.add('in');
+    if(!celebrated){fireworks();fireworks();burstConfetti(window.innerWidth/2,window.innerHeight*0.4,120);celebrated=true;}
+    /* trigger windows update + achievement popup after a beat */
+    setTimeout(function(){showAchievement();},800);
+    setTimeout(function(){runWinUpdate();},2600);
+  });
+
+  /* Achievement popup */
+  var achv=document.getElementById('achv'),achvShown=false;
+  function showAchievement(){
+    if(achvShown)return;achvShown=true;
+    achv.classList.add('show');
+    burstConfetti(window.innerWidth*0.5,window.innerHeight-80,40);
+    setTimeout(function(){achv.classList.remove('show');},5000);
+  }
+
+  /* Fake windows update */
+  var winUpdate=document.getElementById('winUpdate'),winuPct=document.getElementById('winuPct'),winuDone=document.getElementById('winuDone');
+  var winRun=false;
+  function runWinUpdate(){
+    if(winRun)return;winRun=true;
+    winUpdate.classList.add('show');
+    document.body.style.overflow='hidden';
+    var seq=[0,0,0,0,87,100];
+    var i=0;
+    var iv=setInterval(function(){
+      winuPct.textContent=seq[i]+'%';
+      i++;
+      if(i>=seq.length){
+        clearInterval(iv);
+        setTimeout(function(){
+          winuPct.style.display='none';
+          winuDone.style.display='block';
+          winuDone.innerHTML=window.__hi
+            ? 'अपडेट पूर्ण।<br>छात्र अब सुन और लिख सकते हैं — बिना स्पीडरन किए।'
+            : 'Update Complete.<br>Students can now listen and write without speedrunning.';
+        },900);
+        setTimeout(function(){
+          winUpdate.classList.remove('show');
+          winuPct.style.display='';winuDone.style.display='none';winuPct.textContent='0%';
+          document.body.style.overflow='';
+          /* go to final screen */
+          goFinal();
+        },4200);
+      }
+    },650);
+  }
+
+  /* Final screen sequence */
+  var fLine1=document.getElementById('fLine1'),fLine2=document.getElementById('fLine2'),finalBtn=document.getElementById('finalBtn');
+  var finalScreen=document.getElementById('finalScreen');
+  function goFinal(){
+    finalScreen.scrollIntoView({behavior:'smooth'});
+    setTimeout(function(){finalScreen.classList.add('black');},800);
+    setTimeout(function(){fLine1.classList.add('show');},1800);
+    setTimeout(function(){fLine2.classList.add('show');},4200);
+    setTimeout(function(){finalBtn.classList.add('show');fireworks();burstConfetti(window.innerWidth/2,window.innerHeight*0.5,80);},6200);
+  }
+  finalBtn.addEventListener('click',function(){
+    fireworks();fireworks();burstConfetti(window.innerWidth/2,window.innerHeight*0.5,150);
+  });
+
+  /* ---------- Confetti / fireworks engine ---------- */
+  var canvas=document.getElementById('fx'),ctx=canvas.getContext('2d');
+  function resize(){canvas.width=innerWidth;canvas.height=innerHeight;}
+  resize();window.addEventListener('resize',resize);
+  var particles=[];
+  function burstConfetti(x,y,n){
+    var cols=['#5eead4','#22d3ee','#f59e0b','#fb7185','#34d399','#ffffff'];
+    for(var i=0;i<n;i++){
+      particles.push({x:x,y:y,vx:(Math.random()-0.5)*9,vy:Math.random()*-9-2,
+        g:0.22,life:1,col:cols[i%cols.length],size:3+Math.random()*4,rot:Math.random()*6,vr:(Math.random()-0.5)*0.3,shape:Math.random()<0.5?'r':'c'});
+    }
+  }
+  function fireworks(){
+    for(var k=0;k<6;k++){
+      setTimeout(function(){
+        var x=innerWidth*(0.2+Math.random()*0.6),y=innerHeight*(0.2+Math.random()*0.4);
+        var cols=['#5eead4','#f59e0b','#fb7185','#22d3ee','#34d399'];
+        for(var i=0;i<60;i++){
+          var a=(i/60)*Math.PI*2,sp=2+Math.random()*5;
+          particles.push({x:x,y:y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,g:0.06,life:1,
+            col:cols[k%cols.length],size:2+Math.random()*3,rot:0,vr:0,shape:'c',fade:0.012});
+        }
+      },k*220);
+    }
+  }
+  function fxLoop(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    for(var i=particles.length-1;i>=0;i--){
+      var p=particles[i];
+      p.vy+=p.g;p.x+=p.vx;p.y+=p.vy;p.life-=p.fade||0.008;p.rot+=p.vr;
+      if(p.life<=0||p.y>canvas.height+20){particles.splice(i,1);continue;}
+      ctx.save();ctx.globalAlpha=Math.max(p.life,0);ctx.fillStyle=p.col;
+      ctx.translate(p.x,p.y);ctx.rotate(p.rot);
+      if(p.shape==='r')ctx.fillRect(-p.size/2,-p.size/2,p.size,p.size*1.6);
+      else{ctx.beginPath();ctx.arc(0,0,p.size,0,Math.PI*2);ctx.fill();}
+      ctx.restore();
+    }
+    requestAnimationFrame(fxLoop);
+  }
+  fxLoop();
+
+  /* ---------- Easter eggs ---------- */
+  window.addEventListener('keydown',function(e){
+    if(e.code==='Space'){e.preventDefault();burstConfetti(innerWidth/2,innerHeight/2,50);}
+  });
+  var kon=['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'],ki=0;
+  window.addEventListener('keydown',function(e){
+    if(e.key===kon[ki]||e.key.toLowerCase()===kon[ki]){ki++;if(ki===kon.length){document.body.classList.toggle('ultra');burstConfetti(innerWidth/2,innerHeight/2,100);ki=0;}}
+    else ki=0;
+  });
+  var logo=document.getElementById('logo');var lr=0;
+  logo.addEventListener('click',function(){lr+=360;logo.style.transform='rotate('+lr+'deg)';});
+
+  /* ---------- Card tilt ---------- */
+  document.querySelectorAll('.glass').forEach(function(c){
+    c.addEventListener('mousemove',function(e){
+      var r=c.getBoundingClientRect();
+      var dx=(e.clientX-r.left)/r.width-0.5,dy=(e.clientY-r.top)/r.height-0.5;
+      c.style.transform='perspective(900px) rotateY('+dx*6+'deg) rotateX('+(-dy*6)+'deg)';
+    });
+    c.addEventListener('mouseleave',function(){c.style.transform='';});
+  });
+
+})();
+</script>
+
+<script>
+/* ============================================================
+   BILINGUAL ENGINE — English <-> हिन्दी live translation
+   ============================================================ */
+(function(){
+  "use strict";
+  window.__hi=false;
+
+  var pairs=[
+    [`Operation: Save Our Wrists`,`ऑपरेशन: सेव अवर रिस्ट्स`],
+    [`A completely unbiased, 100% scientifically questionable presentation.`,`एक बिल्कुल निष्पक्ष, 100% वैज्ञानिक रूप से संदिग्ध प्रस्तुति।`],
+    [`Warning:`,`चेतावनी:`],
+    [`This presentation contains dangerous levels of charts, animations, and dramatic exaggeration.`,`इस प्रस्तुति में चार्ट, एनिमेशन और नाटकीय अतिशयोक्ति के खतरनाक स्तर शामिल हैं।`],
+    [`Begin Investigation`,`जाँच शुरू करें`],
+    [`Scroll to continue`,`जारी रखने के लिए स्क्रॉल करें`],
+
+    [`Section 01`,`भाग 01`],[`Current Situation`,`वर्तमान स्थिति`],
+    [`A scientifically observed sequence of events that unfolds every single class.`,`हर क्लास में घटित होने वाली घटनाओं का वैज्ञानिक रूप से देखा गया क्रम।`],
+    [`Bell Rings`,`घंटी बजती है`],[`The day begins.`,`दिन की शुरुआत।`],
+    [`Hope Appears`,`आशा प्रकट होती है`],[`Maybe this time we'll keep up.`,`शायद इस बार हम साथ चल पाएँ।`],
+    [`Notebook Opens`,`नोटबुक खुलती है`],[`Fresh page. Infinite potential.`,`नया पन्ना। अनंत संभावनाएँ।`],
+    [`Pen Starts Working Overtime`,`पेन ओवरटाइम करने लगता है`],[`No union. No breaks. No mercy.`,`कोई यूनियन नहीं। कोई ब्रेक नहीं। कोई दया नहीं।`],
+    [`Brain Requests Vacation`,`दिमाग छुट्टी माँगता है`],[`Submitted in writing. Denied instantly.`,`लिखित में दिया गया। तुरंत अस्वीकृत।`],
+    [`One Student Is Somehow Still Writing Yesterday's Notes`,`एक छात्र किसी तरह अभी भी कल के नोट्स लिख रहा है`],[`Time is a flat circle.`,`समय एक चपटा वृत्त है।`],
+
+    [`Section 02`,`भाग 02`],[`The Student Experience`,`छात्र का अनुभव`],
+    [`A live readout of what happens inside a student's notebook. Do not try this at home.`,`छात्र की नोटबुक के अंदर क्या होता है का लाइव रीडआउट। घर पर मत आज़माइए।`],
+    [`Receiving Information...`,`जानकारी प्राप्त हो रही है...`],
+    [`Teacher`,`शिक्षिका`],[`Student Writing Speed`,`छात्र की लिखने की गति`],
+    [`Estimated Synchronization Time`,`अनुमानित सिंक्रनाइज़ेशन समय`],
+    [`Tomorrow.`,`कल।`],
+
+    [`Section 03`,`भाग 03`],[`Scientific Analysis`,`वैज्ञानिक विश्लेषण`],
+    [`Peer-reviewed by absolutely nobody, but the data speaks for itself.`,`किसी ने समीक्षा नहीं की, लेकिन आँकड़े खुद बोलते हैं।`],
+    [`Trying to spell the word correctly`,`शब्द को सही वर्तनी में लिखने की कोशिश`],
+    [`Finding where the teacher is`,`शिक्षिका कहाँ हैं ढूँढना`],
+    [`Actually understanding`,`असल में समझना`],
+    [`Notebook Progress`,`नोटबुक प्रगति`],
+    [`Teacher`,`शिक्षिका`],[`full speed`,`पूरी गति`],
+    [`Student`,`छात्र`],[`2 lines done`,`2 लाइनें हुईं`],
+    [`The Gap`,`अंतर`],[`growing`,`बढ़ रहा है`],
+
+    [`Section 04`,`भाग 04`],[`Scientific Research`,`वैज्ञानिक अनुसंधान`],
+    [`Conducted with the highest standards of absolutely no standards.`,`बिल्कुल किसी मानक के न होने के उच्चतम मानकों के साथ किया गया।`],
+    [`"NASA Was Not Contacted."`,`"नासा से संपर्क नहीं किया गया।"`],
+    [`After running zero experiments...`,`शून्य प्रयोग करने के बाद...`],
+    [`we have concluded that`,`हमने निष्कर्ष निकाला है कि`],
+    [`displaying notes may reduce`,`नोट्स डिस्प्ले करने से घट सकता है`],
+    [`"Ma'am... please repeat."`,`"मैडम... प्लीज़ दोहराइए।"`],
+    [`by approximately`,`लगभग`],
+    [`Margin of error: ±87.3%`,`त्रुटि की सीमा: ±87.3%`],
+
+    [`Section 05`,`भाग 05`],[`Finger Health Report`,`उँगली स्वास्थ्य रिपोर्ट`],
+    [`A medical file nobody asked for, but everyone needed.`,`एक मेडिकल फ़ाइल जिसकी किसी ने माँग नहीं की, लेकिन सबको ज़रूरत थी।`],
+    [`🏥 Hospital Report`,`🏥 अस्पताल रिपोर्ट`],
+    [`Patient`,`मरीज़`],[`Entire Class`,`पूरी क्लास`],
+    [`Condition`,`स्थिति`],[`Severe Academic Finger Gymnastics`,`गंभीर शैक्षणिक उँगली जिमनास्टिक्स`],
+    [`Prescription`,`पर्ची`],[`SenseBoard — Twice Daily`,`सेंसबोर्ड — दिन में दो बार`],
+
+    [`Section 06`,`भाग 06`],[`Productivity Simulator`,`उत्पादकता सिम्युलेटर`],
+    [`Toggle the switch. Watch the classroom transform in real time.`,`स्विच टॉगल करें। कक्षा को वास्तविक समय में बदलते देखें।`],
+    [`OFF`,`बंद`],[`ON`,`चालू`],
+    [`Student Status`,`छात्र स्थिति`],
+    [`Loading...`,`लोड हो रहा है...`],
+    [`Still writing.`,`अभी भी लिख रहे हैं।`],
+    [`Teacher already on next paragraph.`,`शिक्षिका पहले ही अगले पैरा पर।`],
+    [`Listening.`,`सुन रहे हैं।`],
+    [`Understanding.`,`समझ रहे हैं।`],
+    [`Even asking questions.`,`सवाल भी पूछ रहे हैं।`],
+    [`Scientists confused.`,`वैज्ञानिक हैरान।`],
+
+    [`Section 07`,`भाग 07`],[`Time Saved`,`बचा हुआ समय`],
+    [`Calculating...`,`गणना हो रही है...`],
+    [`Still Calculating...`,`अभी भी गणना हो रही है...`],
+    [`Consulting Ancient Mathematics...`,`प्राचीन गणित से सलाह ली जा रही है...`],
+    [`Final Answer`,`अंतिम उत्तर`],
+    [`MINUTES`,`मिनट`],
+    [`That's enough time to...`,`इतना समय काफ़ी है...`],
+    [`Finish lunch.`,`दोपहर का खाना ख़त्म करने के लिए।`],
+    [`Play one football match.`,`एक फुटबॉल मैच खेलने के लिए।`],
+    [`Finish homework.`,`होमवर्क ख़त्म करने के लिए।`],
+    [`Start another presentation.`,`एक और प्रस्तुति शुरू करने के लिए।`],
+
+    [`Section 08`,`भाग 08`],[`Testimonials`,`प्रशंसा`],
+    [`Real quotes from real students who definitely exist.`,`वाकई मौजूद वास्तविक छात्रों के वास्तविक कथन।`],
+    [`"For the first time in history, my handwriting remained in the same language."`,`"इतिहास में पहली बार, मेरी लिखावट उसी भाषा में रही।"`],
+    [`"I looked up from my notebook and discovered there was a teacher in front of the class."`,`"मैंने नोटबुक से ऊपर देखा और पता चला कक्षा में एक शिक्षिका भी हैं।"`],
+    [`"My pen finally received its well-deserved retirement benefits."`,`"मेरे पेन को आख़िरकार उसके हक़ की रिटायरमेंट बेनिफ़िट्स मिल गए।"`],
+    [`"I remembered what was being taught instead of just remembering where my notebook margin ended."`,`"मुझे याद रहा क्या पढ़ाया जा रहा था, बजाय इसके कि बस मेरी नोटबुक का मार्जिन कहाँ ख़त्म हुआ था।"`],
+    [`"My fingers have submitted a formal thank-you letter."`,`"मेरी उँगलियों ने औपचारिक धन्यवाद पत्र दिया है।"`],
+    [`— Sai Idhant`,`— गुमनाम उत्तरजीवी`],
+    [`— Vishruth Murlidharan`,`— सुधारा हुआ नोट-लेखक`],
+    [`—Sathvik Kasthala (narrator and creator of website)`,`— एक कलाई वाला व्यक्ति`],
+    [`— Class Representative`,`— क्लास प्रतिनिधि`],
+    [`— Grateful Hand`,`— आभारी हाथ`],
+
+    [`Section 09`,`भाग 09`],[`Live Stress Meter`,`लाइव तनाव मीटर`],
+    [`Real-time classroom stress, measured with science that hasn't been invented yet.`,`रियल-टाइम कक्षा का तनाव, उस विज्ञान से नापा गया जो अभी तक आविष्कार नहीं हुआ।`],
+    [`Student Stress`,`छात्र का तनाव`],
+    [`Teacher says:`,`शिक्षिका कहती हैं:`],
+    [`"Last sentence."`,`"आख़िरी वाक्य।"`],
+    [`— stress decreases`,`— तनाव घटता है`],
+    [`Teacher immediately says:`,`शिक्षिका तुरंत कहती हैं:`],
+    [`"One more point..."`,`"एक और पॉइंट..."`],
+    [`— stress spikes`,`— तनाव बढ़ जाता है`],
+
+    [`Section 10`,`भाग 10`],[`AI Prediction Engine`,`एआई भविष्यवाणी इंजन`],
+    [`Powered by guessing, trained on every class ever.`,`अनुमान से चलित, हर क्लास पर ट्रेंड।`],
+    [`Predicting...`,`भविष्यवाणी कर रहे हैं...`],
+    [`How many students will ask "Which line are we on?"`,`कितने छात्र पूछेंगे "हम कौन सी लाइन पर हैं?"`],
+    [`Today's Prediction`,`आज की भविष्यवाणी`],
+    [`Confidence: Extremely High`,`विश्वास: अत्यधिक उच्च`],
+
+    [`Grand Finale`,`ग्रैंड फिनाले`],[`Certificate of Classroom Efficiency`,`कक्षा दक्षता का प्रमाणपत्र`],
+    [`🎓 Certificate of Classroom Efficiency`,`🎓 कक्षा दक्षता का प्रमाणपत्र`],
+    [`Awarded To`,`प्रदान किया गया`],
+    [`Vrushali Ma'am`,`वृषाली मैडम`],
+    [`For embracing the revolutionary educational technology known as...`,`इस क्रांतिकारी शैक्षणिक तकनीक को अपनाने के लिए जिसे जाना जाता है...`],
+    [`✨ Displaying Notes on the SenseBoard ✨`,`✨ सेंसबोर्ड पर नोट्स डिस्प्ले करना ✨`],
+    [`Official Benefits:`,`आधिकारिक लाभ:`],
+    [`Happier students`,`खुश छात्र`],
+    [`Less "Ma'am, please repeat."`,`कम "मैडम, प्लीज़ दोहराइए।"`],
+    [`Fewer tired wrists`,`कम थकी कलाइयाँ`],
+    [`More listening`,`ज़्यादा सुनना`],
+    [`Cleaner notebooks`,`साफ़-सुथरी नोटबुक`],
+    [`Maximum classroom efficiency`,`अधिकतम कक्षा दक्षता`],
+    [`Seal:`,`मुहर:`],
+    [`Certified by the Totally Serious Institute of Classroom Science™`,`पूरी तरह गंभीर कक्षा विज्ञान संस्थान™ द्वारा प्रमाणित`],
+    [`APPROVED`,`स्वीकृत`],
+    [`Display the Notes`,`नोट्स डिस्प्ले करें`],
+
+    [`A pen is mightier than the keyboard...`,`कलम कीबोर्ड से अधिक शक्तिशाली होती है...`],
+    [`...unless the keyboard is connected to a`,`...जब तक कीबोर्ड किसी`],
+    [`SenseBoard`,`सेंसबोर्ड`],
+    [`.`,`।`],
+    [`Let's Make Learning Easier for Everyone ❤️`,`आइए सबके लिए सीखना आसान बनाएँ ❤️`],
+
+    [`Achievement Unlocked`,`उपलब्धि अनलॉक`],
+    [`Caught Up`,`बराबर पहुँच गए`],
+    [`Somehow reached the same line as everyone else.`,`किसी तरह सबकी लाइन पर पहुँच गए।`],
+
+    [`Please wait.`,`कृपया प्रतीक्षा करें।`],
+    [`Installing... Educational Efficiency Update`,`इंस्टॉल हो रहा है... शैक्षणिक दक्षता अपडेट`],
+    [`Update Complete.`,`अपडेट पूर्ण।`],
+    [`Students can now listen and write without speedrunning.`,`छात्र अब बिना स्पीडरन किए सुन और लिख सकते हैं।`],
+
+    [`Operation: Save Our Wrists · A presentation by the students · No wrists were harmed in the making of this page`,`ऑपरेशन: सेव अवर रिस्ट्स · छात्रों द्वारा एक प्रस्तुति · इस पेज को बनाते समय किसी कलाई का नुक़सान नहीं हुआ`],
+
+    /* JS-driven dynamic strings */
+    [`Sharpening pencils...`,`पेंसिलें तेज़ कर रहे हैं...`],[`Convincing the teacher...`,`शिक्षिका को मना रहे हैं...`],[`Calculating handwriting speed...`,`लिखावट की गति नाप रहे हैं...`],[`Finding missing notebook...`,`गुमशुदा नोटबुक ढूँढ रहे हैं...`],[`Loading educational excellence...`,`शैक्षणिक उत्कृष्टता लोड हो रही है...`],[`Aligning the stars...`,`तारों को क्रम में लगा रहे हैं...`],[`Consulting the wrist committee...`,`कलाई समिति से सलाह ले रहे हैं...`],
+    [`Thinking...`,`सोच रहे हैं...`],[`Consulting the students...`,`छात्रों से सलाह ले रहे हैं...`],[`Almost certain...`,`लगभग निश्चित...`],[`Prediction complete.`,`भविष्यवाणी पूर्ण।`]
+  ];
+
+  var HI={},INV={};
+  pairs.forEach(function(p){HI[p[0]]=p[1];INV[p[1]]=p[0];});
+
+  function applyLang(){
+    var w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT,{
+      acceptNode:function(n){
+        var p=n.parentNode;if(!p)return NodeFilter.FILTER_REJECT;
+        var t=p.tagName;
+        if(t==='SCRIPT'||t==='STYLE')return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    },false);
+    var node;
+    while(node=w.nextNode()){
+      var val=node.nodeValue,key=val.trim();
+      if(!key)continue;
+      var repl=window.__hi?HI[key]:INV[key];
+      if(repl!==undefined){
+        var lead=val.match(/^\s*/)[0],trail=val.match(/\s*$/)[0];
+        node.nodeValue=lead+repl+trail;
+      }
+    }
+  }
+
+  var btn=document.getElementById('langToggle'),lbl=document.getElementById('langLabel');
+  btn.addEventListener('click',function(){
+    window.__hi=!window.__hi;
+    applyLang();
+    lbl.textContent=window.__hi?'English':'हिन्दी';
+    document.documentElement.lang=window.__hi?'hi':'en';
+  });
+})();
+</script>
+</body>
+</html>
